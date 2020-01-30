@@ -1,7 +1,7 @@
 {
-  "name": "nodejs-console-app1",
+  "name": "lab",
   "version": "0.0.0",
-  "description": "NodejsConsoleApp1",
+  "description": "Lab",
   "main": "app.js",
   "author": {
     "name": ""
@@ -12,6 +12,6 @@
   },
   "devDependencies": {
     "@types/node": "^8.0.14",
-    "typescript": "^3.2.2"
+    "typescript": "^3.7.5"
   }
 }
