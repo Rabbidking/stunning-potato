@@ -1,5 +1,6 @@
 import { Token } from "./Token"
 import { Grammar } from "./Grammar"
+//this is a comment
 
 export class Tokenizer {
     grammar: Grammar;
