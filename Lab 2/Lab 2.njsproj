@@ -34,11 +34,13 @@
     <Content Include="gram.txt" />
     <Content Include="input1.txt" />
     <Content Include="input2.txt" />
+    <Content Include="inputs.json" />
     <Content Include="package.json" />
     <Content Include="tests.txt" />
     <Content Include="tsconfig.json" />
   </ItemGroup>
   <ItemGroup>
+    <TypeScriptCompile Include="exetools.ts" />
     <TypeScriptCompile Include="Grammar.ts" />
     <TypeScriptCompile Include="parser.ts">
       <SubType>Code</SubType>

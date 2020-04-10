@@ -35,14 +35,14 @@ WHITESPACE : ( ' ' | '\t' | '\n' | '\r' )+ -> skip;
 COMMENT : '//'.*?'\n' -> skip;	//match everything within the comment, end at newline
 
 start : program EOF ;
-program : varDeclList braceblock ;
+program : braceblock ;
 stmts : stmt stmts | lambda ;
-stmt : cond | loop | returnStmt SEMI | assign SEMI | funcCall SEMI ;
+stmt : cond | loop | returnStmt SEMI  ;
 loop : WHILE LP expr RP braceblock ;
 cond : IF LP expr RP braceblock | IF LP expr RP braceblock ELSE braceblock ;
 braceblock : LBR stmts RBR ;
 returnStmt : RETURN expr ;
-expr : orexp ;
+expr : NUM ;
 orexp : orexp OR andexp | andexp ;
 andexp : andexp AND notexp | notexp ;
 notexp :  NOT notexp | rel ;

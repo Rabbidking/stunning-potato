@@ -1,7 +1,5 @@
 export class Grammar {
 
-    //g: Set<string> = new Set();
-    //g: Map<string, string> = new Map();
     terminals: Map<string, RegExp> = new Map();
 
     constructor(grammar: string) {

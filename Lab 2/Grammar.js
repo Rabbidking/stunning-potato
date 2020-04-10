@@ -2,8 +2,6 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 class Grammar {
     constructor(grammar) {
-        //g: Set<string> = new Set();
-        //g: Map<string, string> = new Map();
         this.terminals = new Map();
         let lineArray = grammar.split("\n"); //array of \n chars seperates each line
         //for loop here, put grammars into the set
