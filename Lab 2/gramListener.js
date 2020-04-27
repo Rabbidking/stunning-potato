@@ -236,6 +236,15 @@ gramListener.prototype.exitBuiltinFuncCall = function(ctx) {
 };
 
 
+// Enter a parse tree produced by gramParser#cast.
+gramListener.prototype.enterCast = function(ctx) {
+};
+
+// Exit a parse tree produced by gramParser#cast.
+gramListener.prototype.exitCast = function(ctx) {
+};
+
+
 // Enter a parse tree produced by gramParser#lambda.
 gramListener.prototype.enterLambda = function(ctx) {
 };

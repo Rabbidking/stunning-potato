@@ -2,17 +2,30 @@ default rel
 section .text
 global main
 main:
-undefined:
-mov rax, 1
-cmp rax, 0
-je lbl0
-mov rax, 0
-cmp rax, 0
-je lbl1
-mov rax, 1
+push qword 1
+mov rax, __float64__ (2.999)
+push rax
+movq xmm0, [rsp]
+add rsp, 8
+roundsd xmm0, xmm0, 3
+cvtsd2si rax, xmm0
+push rax
+pop rbx
+pop rax
+add rax, rbx
+push rax
+mov rax, __float64__ (3.5)
+push rax
+movq xmm0, [rsp]
+add rsp, 8
+roundsd xmm0, xmm0, 3
+cvtsd2si rax, xmm0
+push rax
+pop rbx
+pop rax
+add rax, rbx
+push rax
+pop rax
 ret
-lbl1:
-jmp undefined
-lbl0:
 ret
 section .data
