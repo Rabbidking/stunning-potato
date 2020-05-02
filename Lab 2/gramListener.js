@@ -29,6 +29,33 @@ gramListener.prototype.exitProgram = function(ctx) {
 };
 
 
+// Enter a parse tree produced by gramParser#varDeclList.
+gramListener.prototype.enterVarDeclList = function(ctx) {
+};
+
+// Exit a parse tree produced by gramParser#varDeclList.
+gramListener.prototype.exitVarDeclList = function(ctx) {
+};
+
+
+// Enter a parse tree produced by gramParser#varDecl.
+gramListener.prototype.enterVarDecl = function(ctx) {
+};
+
+// Exit a parse tree produced by gramParser#varDecl.
+gramListener.prototype.exitVarDecl = function(ctx) {
+};
+
+
+// Enter a parse tree produced by gramParser#varDeclPrime.
+gramListener.prototype.enterVarDeclPrime = function(ctx) {
+};
+
+// Exit a parse tree produced by gramParser#varDeclPrime.
+gramListener.prototype.exitVarDeclPrime = function(ctx) {
+};
+
+
 // Enter a parse tree produced by gramParser#stmts.
 gramListener.prototype.enterStmts = function(ctx) {
 };
@@ -161,24 +188,6 @@ gramListener.prototype.enterFactor = function(ctx) {
 
 // Exit a parse tree produced by gramParser#factor.
 gramListener.prototype.exitFactor = function(ctx) {
-};
-
-
-// Enter a parse tree produced by gramParser#varDeclList.
-gramListener.prototype.enterVarDeclList = function(ctx) {
-};
-
-// Exit a parse tree produced by gramParser#varDeclList.
-gramListener.prototype.exitVarDeclList = function(ctx) {
-};
-
-
-// Enter a parse tree produced by gramParser#varDecl.
-gramListener.prototype.enterVarDecl = function(ctx) {
-};
-
-// Exit a parse tree produced by gramParser#varDecl.
-gramListener.prototype.exitVarDecl = function(ctx) {
 };
 
 

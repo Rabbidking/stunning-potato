@@ -3,10 +3,12 @@ let antlr4 = require('./antlr4')
 let Lexer = require('./gramLexer.js').gramLexer;
 let Parser = require('./gramParser.js').gramParser;
 let asmCode: string[] = [];
+let stringPool: Map<string, string>;
 
 enum VarType {
     INTEGER,
-    FPNUM
+    FPNUM,
+    STRING
 }
 
 class Token {
@@ -76,6 +78,36 @@ class ErrorHandler {
     }
 }
 
+class VarInfo {
+    type: VarType;
+    location: string;  //asm label
+    //also the line number, if you want
+    constructor(t: VarType, location: string) {
+        this.location = location;
+        this.type = t;
+    }
+}
+
+class SymbolTable {
+    table: Map<string, VarInfo>;
+    constructor() {
+        this.table = new Map();
+    }
+    get(name: string) {
+        if (!this.table.has(name))
+            throw new Error("Does not exist!");
+        return this.table.get(name);
+    }
+    set(name: string, v: VarInfo) {
+        if (this.table.has(name))
+            throw new Error("Redeclaration!");
+        this.table.set(name, v);
+    }
+    has(name: string) {
+        return this.table.has(name);
+    }
+}
+
 
 function ICE() {
     //ICE() = Internal Compiler Error (return error message)
@@ -88,6 +120,8 @@ function emit(instr: string) {
 }
 
 function makeAsm(root: TreeNode) {
+    symtable = new SymbolTable();
+    stringPool = new Map<string, string>();
     asmCode = [];
     labelCounter = 0;
     emit("default rel");
@@ -97,14 +131,19 @@ function makeAsm(root: TreeNode) {
     programNodeCode(root.children[0]);
     emit("ret");
     emit("section .data");
+    outputSymbolTableInfo();
+    outputStringPoolInfo();
     return asmCode.join("\n");
 }
 
+let symtable = new SymbolTable();
+
 function programNodeCode(n: TreeNode) {
-    //program -> braceblock
+    //program -> varDeclList braceblock
     if (n.sym != "program")
         ICE();
-    braceblockNodeCode(n.children[0]);
+    varDeclListNodeCode(n.children[0]);
+    braceblockNodeCode(n.children[1]);
 }
 
 function braceblockNodeCode(n: TreeNode) {
@@ -121,7 +160,7 @@ function stmtsNodeCode(n: TreeNode) {
 }
 
 function stmtNodeCode(n: TreeNode) {
-    //stmt -> cond | loop | return-stmt SEMI
+    //stmt -> cond | loop | return-stmt SEMI | assign SEMI
     let c = n.children[0];
     switch (c.sym) {
         case "cond":
@@ -130,6 +169,8 @@ function stmtNodeCode(n: TreeNode) {
             loopNodeCode(c); break;
         case "returnStmt":
             returnstmtNodeCode(c); break;
+        case "assign":
+            assignNodeCode(c); break;
         default:
             ICE();
     }
@@ -233,7 +274,7 @@ function loopNodeCode(n: TreeNode) {
 //******************************************************
 
 function factorNodeCode(n: TreeNode): VarType {
-    //factor -> NUM | FPNUM | LP expr RP | cast
+    //factor -> NUM | FPNUM | LP expr RP | cast | STRINGCONST | ID
     if (n === undefined) throw new Error("n is undefined!");
     if (n.sym !== "factor") throw new Error("n is not a factor!");
     let child = n.children[0];
@@ -258,6 +299,19 @@ function factorNodeCode(n: TreeNode): VarType {
 
         case "cast":
             return castNodeCode(child);
+
+        case "ID":
+            if (!symtable.has(child.token.lexeme)) {
+                throw new Error("ID does not exist!");
+            }
+            let ID = symtable.get(child.token.lexeme);
+            emit(`push qword [${ID.location}]`);
+            return ID.type;
+
+        case "STRINGCONST":
+            let string_addr = stringconstantNodeCode(child);
+            emit(`push qword ${string_addr}`);
+            return VarType.STRING;
 
         default:
             ICE();
@@ -467,7 +521,7 @@ function relNodeCode(n: TreeNode): VarType {
     else {
         let sum1Type = sumNodeCode(n.children[0]);
         let sum2Type = sumNodeCode(n.children[2]);
-        if (sum1Type != sum2Type)   ICE();
+        if (sum1Type != sum2Type) ICE();
 
         if (sum1Type == VarType.INTEGER && sum2Type == VarType.INTEGER) {
 
@@ -553,6 +607,8 @@ function convertStackTopToZeroOrOneInteger(type: VarType) {
 
 function orexpNodeCode(n: TreeNode): VarType {
     //orexp -> orexp OR andexp | andexp
+    //var endloopLabel = label();
+    //emit(`; ${endloopLabel}`);
     if (n.children.length === 1)
         return andexpNodeCode(n.children[0]);
     else {
@@ -571,6 +627,8 @@ function orexpNodeCode(n: TreeNode): VarType {
 
 function andexpNodeCode(n: TreeNode): VarType {
     //andexp : andexp AND notexp | notexp ;
+    //var endloopLabel = label();
+    //emit(`; ${endloopLabel}`);
     if (n.children.length === 1)
         return notexpNodeCode(n.children[0]);
     else {
@@ -592,6 +650,8 @@ function andexpNodeCode(n: TreeNode): VarType {
 
 function notexpNodeCode(n: TreeNode): VarType {
     //notexp :  NOT notexp | rel ;
+    //var endloopLabel = label();
+    //emit(`; ${endloopLabel}`);
     if (n.children.length === 1)
         return relNodeCode(n.children[0]);
     else {
@@ -633,6 +693,89 @@ function negNodeCode(n: TreeNode): VarType {
 
 //******************************************************
 
+//ASM VARS AND TYPES
+
+
+
+function moveBytesFromStackToLocation(loc: string) {
+    emit("pop rax");
+    emit(`mov [${loc}], rax`);
+}
+
+function assignNodeCode(n: TreeNode) {
+    // assign -> ID EQ expr
+    let t: VarType = exprNodeCode(n.children[2]);
+    let vname = n.children[0].token.lexeme;
+    if (symtable.get(vname).type !== t)
+        throw new Error("Type mismatch!");
+    moveBytesFromStackToLocation(symtable.get(vname).location);
+}
+
+function varDeclListNodeCode(n: TreeNode) {
+    //varDeclList -> varDecl SEMI varDeclList | lambda 
+    if (n.children.length == 0 || n.children[0].sym == "lambda") {
+        return;
+    }
+    else {
+        varDeclNodeCode(n.children[0]);
+        varDeclListNodeCode(n.children[2]);
+    }
+}
+
+function varDeclNodeCode(n: TreeNode) {
+    //varDecl -> TYPE ID
+    let vname = n.children[1].token.lexeme;
+    let vtype = typeNodeCode(n.children[0]);
+    symtable.set(vname, new VarInfo(vtype, label()));
+}
+
+function typeNodeCode(n: TreeNode) {
+    //TYPE : ('int'|'string'|'double')
+    switch (n.token.lexeme) {
+        case "int":
+            return VarType.INTEGER;
+        case "string":
+            return VarType.STRING;
+        case "double":
+            return VarType.FPNUM;
+    }
+}
+
+function stringconstantNodeCode(n: TreeNode) {
+    let s = n.token.lexeme;
+    s = s.substring(1, s.length - 1);
+
+    //...handle backslash escapes...
+    //do later
+
+
+    if (!stringPool.has(s))
+        stringPool.set(s, label());
+    return stringPool.get(s);   //return the label
+}
+
+function outputSymbolTableInfo() {
+    for (let vname of symtable.table.keys()) {
+        let vinfo = symtable.get(vname);
+        emit(`${vinfo.location}:`);
+        emit("dq 0");
+    }
+}
+
+function outputStringPoolInfo() {
+    for (let key of stringPool.keys()) {
+        let lbl = stringPool.get(key);
+        emit(`${lbl}:`);
+        for (let i = 0; i < key.length; ++i) {
+            emit(`db ${key.charCodeAt(i)}`);
+        }
+        emit("db 0");   //null terminator
+    }
+    console.log(stringPool);
+}
+
+//******************************************************
+
 function walk(parser: any, node: any) {
     let p: any = node.getPayload();
     if (p.ruleIndex === undefined) {
@@ -662,7 +805,7 @@ export function parse(txt: string) {
     let tokens = new antlr4.CommonTokenStream(lexer);
     let parser = new Parser(tokens);
     parser.buildParseTrees = true;
- 
+
     //Error handling
     let handler = new ErrorHandler();
     lexer.removeErrorListeners();
