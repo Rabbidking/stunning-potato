@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const Token_1 = require("./Token");
+//this is a comment
 class Tokenizer {
     constructor(grammar) {
         this.grammar = grammar;
@@ -27,8 +28,8 @@ class Tokenizer {
             //special "end of file" metatoken
             return new Token_1.Token("$", undefined, this.lineNumber);
         }
-        for (let sym of this.grammar.terminals.keys()) {
-            let rex = this.grammar.terminals.get(sym); //RegExp coresponding to key
+        for (let sym of this.grammar.productions.keys()) {
+            let rex = this.grammar.productions.get(sym); //RegExp coresponding to key
             rex.lastIndex = this.idx; //tell where to start searching
             let m = rex.exec(this.inputData); //do the search
             if (m) {

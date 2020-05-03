@@ -38,8 +38,8 @@ export class Tokenizer {
             return new Token("$", undefined, this.lineNumber);
         }
 
-        for (let sym of this.grammar.terminals.keys()) {
-            let rex = this.grammar.terminals.get(sym);    //RegExp coresponding to key
+        for (let sym of this.grammar.productions.keys()) {
+            let rex = this.grammar.productions.get(sym);    //RegExp coresponding to key
             rex.lastIndex = this.idx;   //tell where to start searching
             let m = rex.exec(this.inputData);   //do the search
             

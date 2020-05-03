@@ -1,101 +1,96 @@
 export class Grammar {
 
-    terminals: Map<string, RegExp> = new Map();
-    productions: Map<string, string[]> = new Map();
-    doTokens = false;
+    productions: Map<string, RegExp> = new Map();
+    nonTerminalSymbols: Array<string> = [];
+    symbols: Array<string> = [];
+    doNonterminals = false;
 
     constructor(grammar: string) {
 
         let lineArray = grammar.split("\n");    //array of \n chars seperates each line
+
 
         //for loop here, put grammars into the set
         for (let i = 0; i < lineArray.length - 1; i++) {
 
             let curLine = lineArray[i].trim();
 
-            if (curLine.length > 0) {
+            if (curLine.length == 0) {
+                //nonterminals
+                this.doNonterminals = true;
+                continue;
+            }
 
-                let symArray = lineArray[i].split("->");    //array of left/right symbols separated by the arrow
-                let lhs = symArray[0].trim();               //left side (nonterminal symbols)
-                let rhs = symArray[1].trim();               //right side (RegEx terminals)
+            let symArray = lineArray[i].split("->");
+            let lhs = symArray[0].trim();               //left side (nonterminal symbols)
+            let rhs = symArray[1].trim();               //right side (RegEx terminals)
 
-                if (this.doTokens) {
+            if (symArray.length != 2)
+                throw new Error("Invalid production!");
 
-                    //check Tokens
+            if (this.productions.has(lhs) && !this.doNonterminals) {
+                //terminals section, but it's a dupe
+                throw new Error("Duplicate terminal!");
+            }
 
-                    if (this.terminals.has(lhs))
-                        throw Error("Duplicate type!");
+            else if (this.productions.has(lhs) && this.doNonterminals) {
+                //nonterminals section, is a dupe = combine
+                let tmp = this.productions.get(lhs).source;
+                tmp = tmp.concat(" | ");
+                tmp = tmp.concat(rhs);
+                tmp.replace("lambda", "");
 
-                    else {
+                let rex = new RegExp(tmp);
+                this.productions.set(lhs, rex);
+            }
 
-                        try {
-                            //set terminals
-                            let rex = new RegExp(rhs, "gy");    //get back rhs
-                            this.terminals.set(lhs, rex);
-                        }
+            else {
+                //adding new value into productions
+                this.productions.set(lhs, new RegExp(rhs.replace("lambda", "")));
+                this.symbols.push(lhs); //symbols = expressions/vars/varDecl (LHS), productions = vars -> vars (both LHS & RHS)
 
-                        catch
-                        {
-                            throw Error("Invalid regex!");
-                        }
-                    }
-                }
-
-                else {
-                    //productions
-                    if (this.productions.has(lhs))
-                        throw Error("Duplicate production!")
-
-                    else {
-                        try {
-                            let prodArray = rhs.split("|");
-
-                            //evaluate productions (TODO)
-                            let dupe = false;
-                            for (let i = 0; i < this.productions.size; i++) {
-                                if (this.productions[i][0] == lhs) {
-                                    dupe = true;
-                                    break;
-                                }
-                            }
-                            if (dupe) {
-                                throw new Error("Duplicate symbol!");
-                            }
-                            else {
-                                if (this.terminals.has(lhs)) {
-                                    for (let i = 0; i < this.productions.size; i++) {
-                                        if (this.productions[i][0] == lhs) {
-                                            for (let j = 0; j < rhs.length; j++) {
-                                                this.productions.set(rhs, prodArray);
-                                            }
-                                        }
-                                    }
-                                }
-                                else {
-                                    this.productions.set(lhs, prodArray);
-                                }
-                                for (let i = 0; i < rhs.length; i++) {
-                                    let tmp = rhs[i].split(" ");
-                                    for (let j = 0; j < tmp.length; j++) {
-                                        if (prodArray.includes(tmp[i].trim()) == false) {
-                                            prodArray.push(tmp[i].trim());
-                                        }
-                                    }
-                                }
-                            }
-
-
-                            this.productions.set(lhs, prodArray);
-                        }
-
-                        catch{
-                            throw Error("Invalid production!");
-                        }
-                    }
+                if (this.doNonterminals) {
+                    this.nonTerminalSymbols.push(lhs);
                 }
             }
-            else if (this.doTokens)
-                this.doTokens = false;
+        }
+
+        //Error handling
+        let usedSymbol: Set<String> = new Set<String>();
+
+
+        //initialize usedSymbol
+        for (let i = 0; i < this.nonTerminalSymbols.length; i++) {
+            let tmp = this.productions.get(this.nonTerminalSymbols[i]).source;
+            //expr -> LP NUM RP | ID
+            //tmp = LP NUM RP | ID
+            let tmp_sep = tmp.split(" | ");
+            for (let j = 0; j < tmp_sep.length; j++) {
+                //tmp_sep = "LP NUM RP", "ID"
+                //separate on whitespace
+                let wsArray = tmp_sep[j].split(" ");
+                for (let k = 0; k < wsArray.length; k++) {
+                    //wsArray = LP, NUM, RP
+                    usedSymbol.add(wsArray[k]);
+                }
+            }
+        }
+
+        let usedArray = Array.from(usedSymbol.values());
+        let symSet = new Set<String>(this.symbols);
+
+        for (let i = 0; i < usedArray.length; i++) {
+            //expr -> ID, but we've never seen/used ID
+            if (!symSet.has(usedArray[i]) && usedArray[i] != "") {
+                throw new Error("Used an undefined symbol!");
+            }
+
+        }
+
+        for (let i = 0; i < this.symbols.length; i++) {
+            //if you have the symbol, but aren't using it
+            if (!usedSymbol.has(this.symbols[i]))
+                throw new Error("Unused symbol!");
         }
     }
 }
