@@ -1,36 +1,46 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const Grammar_1 = require("./Grammar");
 let fs = require("fs");
+const Grammar_1 = require("./Grammar");
 function main() {
-    let teststr = fs.readFileSync("tests.txt", "utf8");
-    let tests = JSON.parse(teststr);
-    let G;
+    let data = fs.readFileSync("tests.txt", "utf8");
+    let tests = JSON.parse(data);
+    let numPassed = 0;
+    let numFailed = 0;
     for (let i = 0; i < tests.length; ++i) {
-        console.log("Test " + i);
-        let spec = tests[i]["spec"];
-        let valid = tests[i]["valid"];
         let name = tests[i]["name"];
-        try {
-            let G = new Grammar_1.Grammar(spec);
-            if (valid) {
-            }
-            else {
-                console.log("Reported grammar " + name + " as valid, but it's not.");
-                return;
-            }
+        let expected = tests[i]["nullable"];
+        let input = tests[i]["input"];
+        let G = new Grammar_1.Grammar(input);
+        let nullable = G.getNullable();
+        if (!setsAreSame(nullable, expected)) {
+            console.log("Test " + name + " failed");
+            ++numFailed;
         }
-        catch (e) {
-            if (valid) {
-                console.log("Reported grammar " + name + " as invalid, but it's valid.");
-                console.log(e);
-                return;
-            }
-            else {
-            }
-        }
+        else
+            ++numPassed;
     }
-    console.log(tests.length + " tests OK");
+    console.log(numPassed + " tests OK" + "      " + numFailed + " tests failed");
+    return numFailed == 0;
+}
+function setsAreSame(s1, s2) {
+    let L1 = [];
+    let L2 = [];
+    s1.forEach((x) => {
+        L1.push(x);
+    });
+    s2.forEach((x) => {
+        L2.push(x);
+    });
+    L1.sort();
+    L2.sort();
+    if (L1.length !== L2.length)
+        return false;
+    for (let i = 0; i < L1.length; ++i) {
+        if (L1[i] !== L2[i])
+            return false;
+    }
+    return true;
 }
 main();
 //# sourceMappingURL=testharness.js.map

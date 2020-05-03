@@ -1,44 +1,55 @@
-"use strict";
-
-//This test harness doesn't output many diagnostics when things break.
-//If you want to, you can instrument it accordingly to help you debug.
 
 declare var require:any;
-
-import {Grammar} from "./Grammar"
 let fs = require("fs");
-
+import {Grammar} from "./Grammar";
 
 function main(){
-    let teststr : string = fs.readFileSync("tests.txt","utf8");
-    let tests = JSON.parse(teststr);
-    let G: Grammar;
-
-    for(let i=0;i<tests.length;++i){
-        console.log("Test "+i);
-        let spec = tests[i]["spec"];
-        let valid = tests[i]["valid"];
-        let name = tests[i]["name"];
-        
-        try{
-            let G = new Grammar(spec);
-            if( valid ){
-            } else {
-                console.log("Reported grammar "+name+" as valid, but it's not.");
-                return;
-            }
-        } catch(e){
-            if( valid ){
-                console.log("Reported grammar "+name+" as invalid, but it's valid.");
-                console.log(e);
-                return;
-            }
-            else{
-            }
-        }
-    }
+    let data:string = fs.readFileSync("tests.txt","utf8");
+    let tests: any = JSON.parse(data);
+    let numPassed=0;
+    let numFailed=0;
     
-    console.log(tests.length+" tests OK");
+    for(let i=0;i<tests.length;++i){
+        
+        let name: string = tests[i]["name"];
+        let expected: any = tests[i]["nullable"];
+        let input: string = tests[i]["input"];
+
+        let G = new Grammar(input);
+        let nullable : any = G.getNullable();
+        if( !setsAreSame( nullable, expected ) ){
+            console.log("Test "+name+" failed");
+            ++numFailed;
+        } 
+        else
+            ++numPassed;
+    }
+    console.log(numPassed+" tests OK"+"      "+numFailed+" tests failed" );
+    return numFailed==0;
 }
 
-main()
+function setsAreSame( s1: any, s2: any ){
+    let L1 : string[] = [];
+    let L2 : string[] = [];
+    
+    s1.forEach( (x:string) => {
+        L1.push(x);
+    });
+    s2.forEach( (x:string) => {
+        L2.push(x);
+    });
+    L1.sort();
+    L2.sort();
+    if( L1.length !== L2.length )
+        return false;
+    for(let i=0;i<L1.length;++i){
+        if( L1[i] !== L2[i] )
+            return false;
+    }
+    return true;
+}
+ 
+    
+
+
+main();

@@ -4,6 +4,7 @@ export class Grammar {
     nonTerminalSymbols: Array<string> = [];
     symbols: Array<string> = [];
     doNonterminals = false;
+    stable = true;
 
     constructor(grammar: string) {
 
@@ -92,5 +93,36 @@ export class Grammar {
             if (!usedSymbol.has(this.symbols[i]))
                 throw new Error("Unused symbol!");
         }
+    }
+
+    union(set1, set2): Set<String> {
+        let setA = set1;
+        let setB = set2;
+        return setA.add(setB);
+    }
+
+    getNullable(): Set<String> {
+        let nullable = new Set<String>();   //storing LHS
+        for (let i = 0; i < this.nonTerminalSymbols.length; i++) {
+            //split on EVERY |, then split on Whitespaces
+            //maybe make a new function for unioning a Set
+            //boolean ONLY stabilizes if it gets into the 3rd if check
+
+            let tmp = this.productions.get(this.nonTerminalSymbols[i]).source;
+            let sep = tmp.split(" | ");
+            for (let j = 0; j < sep.length; j++) {
+                let wsArray = sep[j].split(" ");
+                let allNullable = wsArray.every((sym: string) => {
+                    return nullable.has(sym);
+                });
+                if (allNullable) {
+                    if (!nullable.has(this.nonTerminalSymbols[j][0])) {
+                        this.stable = false;
+                        this.union(sep, wsArray);
+                    }
+                }
+            }
+        }
+        return nullable;
     }
 }

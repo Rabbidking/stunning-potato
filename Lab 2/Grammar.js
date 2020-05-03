@@ -6,6 +6,7 @@ class Grammar {
         this.nonTerminalSymbols = [];
         this.symbols = [];
         this.doNonterminals = false;
+        this.stable = true;
         let lineArray = grammar.split("\n"); //array of \n chars seperates each line
         //for loop here, put grammars into the set
         for (let i = 0; i < lineArray.length - 1; i++) {
@@ -73,6 +74,34 @@ class Grammar {
             if (!usedSymbol.has(this.symbols[i]))
                 throw new Error("Unused symbol!");
         }
+    }
+    union(set1, set2) {
+        let setA = set1;
+        let setB = set2;
+        return setA.add(setB);
+    }
+    getNullable() {
+        let nullable = new Set(); //storing LHS
+        for (let i = 0; i < this.nonTerminalSymbols.length; i++) {
+            //split on EVERY |, then split on Whitespaces
+            //maybe make a new function for unioning a Set
+            //boolean ONLY stabilizes if it gets into the 3rd if check
+            let tmp = this.productions.get(this.nonTerminalSymbols[i]).source;
+            let sep = tmp.split(" | ");
+            for (let j = 0; j < sep.length; j++) {
+                let wsArray = sep[j].split(" ");
+                let allNullable = wsArray.every((sym) => {
+                    return nullable.has(sym);
+                });
+                if (allNullable) {
+                    if (!nullable.has(this.nonTerminalSymbols[j][0])) {
+                        this.stable = false;
+                        this.union(sep, wsArray);
+                    }
+                }
+            }
+        }
+        return nullable;
     }
 }
 exports.Grammar = Grammar;
