@@ -3,6 +3,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const Token_1 = require("./Token");
 //this is a comment
 class Tokenizer {
+    //previous: Token
+    //current: Token
     constructor(grammar) {
         this.grammar = grammar;
         this.lineNumber = 1;

@@ -1,4 +1,4 @@
-import {Token} from "./Token"
+import { Token } from "./Token"
 import { Tokenizer } from "./Tokenizer"
 import { Grammar } from "./Grammar"
 
@@ -7,17 +7,17 @@ var operatorStack = [];
 let grammar: Grammar;
 let tokenizer: Tokenizer;
 
-class TreeNode{
-    sym: string;
-    token: Token;
-    children: TreeNode[];
-    constructor(sym: string, token: Token){
-        this.sym = sym;
-        this.token = token;
-        this.children = [];
-    }
-	
-	addChild(child: TreeNode){
+class TreeNode {
+	sym: string;
+	token: Token;
+	children: TreeNode[];
+	constructor(sym: string, token: Token) {
+		this.sym = sym;
+		this.token = token;
+		this.children = [];
+	}
+
+	addChild(child: TreeNode) {
 		this.children.push(child);
 	}
 }
@@ -42,29 +42,29 @@ function arity(operator: string): number {
 
 function precedence(operator: string): number {
 	//sort the operators by order of precedence, then return its value
-	switch(operator) {
-		
+	switch (operator) {
+
 		case "FUNC-CALL":
 			return 7;
-			
+
 		case "POWOP":
 			return 6;
-			
+
 		case "BITNOT":
 			return 5;
-			
+
 		case "NEGATE":
 			return 4;
-			
+
 		case "MULOP":
 			return 3;
-			
+
 		case "ADDOP":
 			return 2;
-			
+
 		case "COMMA":
 			return 1;
-		
+
 		default:
 			return 0;
 	}
@@ -76,9 +76,9 @@ function doOperation() {
 	if (arity(opNode.sym) == 2) {
 		let c2: TreeNode = operandStack.pop();
 		opNode.addChild(c2);
-    }
-    opNode.addChild(c1);
-    operandStack.push(opNode);
+	}
+	opNode.addChild(c1);
+	operandStack.push(opNode);
 }
 
 function setGrammar() {
@@ -96,7 +96,7 @@ function setGrammar() {
 }
 
 
-export function parse(input: string): TreeNode{
+export function parse(input: string): TreeNode {
 	let p = null;
 	setGrammar();
 	tokenizer = new Tokenizer(grammar);
@@ -106,32 +106,28 @@ export function parse(input: string): TreeNode{
 
 		var t = tokenizer.next();
 
-		if (t.sym == "NUM")
-			operandStack.push(t.lexeme);
-		else
-			operatorStack.push(t.lexeme);
-		
 		//transform the MINUS operator to NEGATE before doing anything else
 		if (t.lexeme == "-") {
 			if (p == null || p == "LPAREN" || p == precedence(p)) {
 				t.sym = "NEGATE";
-            }		
-        }
-		
+			}
+		}
+
 		//EOF
-		 if (t.sym == "$") {
-            break;
-        }
+		if (t.sym == "$") {
+			break;
+		}
 
 		let sym = t.sym;
-		
+
 		console.log(sym);
 
 		//make new TreeNodes and push them onto the operatorStack
-		if (sym == "SUM" || sym == "ID") {
+		if (t.sym == "NUM" || t.sym == "ID" || t.sym == "LPAREN" || t.sym == "NEGATE" || t.sym == "BITNOT") {
+			console.log("Pushing child node to stack...");
 			operandStack.push(new TreeNode(t.sym, t));
 		}
-		
+
 		//we're at the end of our statement, so we start popping operators off and do the operations, walking up the tree
 		else if (sym == "RPAREN") {
 			while (operatorStack[operatorStack.length - 1].sym != "LPAREN") {
@@ -139,32 +135,34 @@ export function parse(input: string): TreeNode{
 			}
 
 			let tempVal = operatorStack.pop();
+			operandStack.push(tempVal);
 
 			if (p.sym == "LPAREN" && operandStack[operandStack.length - 1].sym == "ID") {
 				let opNode: TreeNode = tempVal;
 				let child: TreeNode = operandStack.pop();
 				opNode.addChild(child);
 				operandStack.push(opNode);
-            }
+			}
 		}
-		
+
 		else {
+			operatorStack.push(sym);
 			let assoc = associativity(sym);
 
 			if (sym == "LPAREN" && p != null && p == "ID") {
 				//push func-call to treeNode
 				operatorStack.push(new TreeNode("FUNC-CALL", null));
-            }
+			}
 
-			//console.log(operatorStack, operandStack)
-			while (assoc != "right" || arity(operatorStack.pop()) != 1) {
+			while (assoc != "right" || arity(sym) != 1) {
 				//if nothing's on our stack, break
 				if (operatorStack.length == 0) {
 					console.log("nothing on the stack")
 					break;
 				}
-				
+
 				let A = operatorStack.pop();
+				operatorStack.push(A);
 				if (assoc == "left" && precedence(A.sym) >= precedence(t.sym)) {
 					console.log("left precedence")
 					//console.log(A)
@@ -172,23 +170,28 @@ export function parse(input: string): TreeNode{
 				}
 				else if (assoc == "right" && precedence(A.sym) > precedence(t.sym)) {
 					console.log("right precedence")
-					console.log(A)
+					//console.log(A)
 					doOperation();
 				}
-				else{
+				else {
 					break;
 				}
+
 			}
+
 			console.log("pushing new TreeNode to stack")
 			operandStack.push(new TreeNode(t.sym, t));
 		}
-		console.log("tracking previously used token\n")
+		//operatorStack.push(new TreeNode(t.sym, t));
+		console.log("Tracking previously used token..\n")
 		p = t;
 	}
-	
+
 	while (operatorStack.length > 0) {
-        doOperation();
+		//console.log("operatorStack: " + operatorStack)
+		doOperation();
+
 	}
-	
+
 	return operandStack.pop();
 }

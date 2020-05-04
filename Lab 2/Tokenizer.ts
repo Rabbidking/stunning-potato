@@ -8,6 +8,8 @@ export class Tokenizer {
     currentLine: number;
     idx: number;    //index of next unparsed char in inputData
     lineNumber: number;
+    //previous: Token
+    //current: Token
 
     constructor(grammar: Grammar) {
         this.grammar = grammar;
@@ -64,10 +66,23 @@ export class Tokenizer {
                     return this.next();
                 }
             }
-            
-            
         }
         //no match; syntax error
         throw new Error("No matches found!");
     }
+
+    /*atEnd(): boolean {
+        if (this.idx >= this.inputData.length) {
+            return true
+        }
+        else {
+            return false
+        }
+    }
+
+    previousToken(): string {
+        if (this.previous == null)
+            return null;
+        return this.previous.sym;
+    }*/
 }
