@@ -14,8 +14,13 @@ class Tokenizer {
         //console.log(inputData);
         this.lineNumber = 1;
         this.idx = 0;
+        this.previous = null;
+        this.current = null;
     }
     next() {
+        if (this.current == null) {
+            this.previous = this.current;
+        }
         //whitespace and new line checks
         while (this.inputData.charAt(this.idx) == '\n') {
             //specific new line check
@@ -33,6 +38,7 @@ class Tokenizer {
             rex.lastIndex = this.idx; //tell where to start searching
             let m = rex.exec(this.inputData); //do the search
             if (m) {
+                //console.log(m.index, this.idx);
                 this.idx += m[0].length;
                 //m[0] contains matched text as string
                 let lexeme = m[0];
@@ -56,6 +62,14 @@ class Tokenizer {
         }
         //no match; syntax error
         throw new Error("No matches found!");
+    }
+    previousToken() {
+        if (this.previous == null) {
+            return null;
+        }
+        else {
+            return this.previous.sym;
+        }
     }
 }
 exports.Tokenizer = Tokenizer;

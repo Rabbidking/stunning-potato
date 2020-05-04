@@ -30,12 +30,12 @@ class Grammar {
                 tmp = tmp.concat(" | ");
                 tmp = tmp.concat(rhs);
                 tmp.replace("lambda", "");
-                let rex = new RegExp(tmp);
+                let rex = new RegExp(tmp, "gy");
                 this.productions.set(lhs, rex);
             }
             else {
                 //adding new value into productions
-                this.productions.set(lhs, new RegExp(rhs.replace("lambda", "")));
+                this.productions.set(lhs, new RegExp(rhs.replace("lambda", ""), "gy"));
                 this.symbols.push(lhs); //symbols = expressions/vars/varDecl (LHS), productions = vars -> vars (both LHS & RHS)
                 if (this.doNonterminals) {
                     this.nonTerminalSymbols.push(lhs);
@@ -68,11 +68,11 @@ class Grammar {
                 throw new Error("Used an undefined symbol!");
             }
         }
-        for (let i = 0; i < this.symbols.length; i++) {
+        /*for (let i = 0; i < this.symbols.length; i++) {
             //if you have the symbol, but aren't using it
             if (!usedSymbol.has(this.symbols[i]))
                 throw new Error("Unused symbol!");
-        }
+        }*/
     }
 }
 exports.Grammar = Grammar;

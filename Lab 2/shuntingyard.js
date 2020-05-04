@@ -81,12 +81,14 @@ function parse(input) {
     setGrammar();
     tokenizer = new Tokenizer_1.Tokenizer(grammar);
     tokenizer.setInput(input);
+    //let prev = tokenizer.previousToken();
     while (true) {
-        var t = tokenizer.next();
+        let t = tokenizer.next();
+        let prev = tokenizer.previousToken();
         //operandStack.pop();
         //transform the MINUS operator to NEGATE before doing anything else
         if (t.lexeme == "-") {
-            if (p == null || p == "LPAREN" || p == precedence(p)) {
+            if (p == null || p == "LPAREN") {
                 t.sym = "NEGATE";
             }
         }
@@ -107,7 +109,7 @@ function parse(input) {
                 doOperation();
             }
             let tempVal = operatorStack.pop();
-            if (p.sym == "LPAREN" && operandStack[operandStack.length - 1].sym == "ID") {
+            if (t.sym == "LPAREN" && operandStack[operandStack.length - 1].sym == "ID") {
                 let opNode = tempVal;
                 let child = operandStack.pop();
                 opNode.addChild(child);
@@ -116,7 +118,7 @@ function parse(input) {
         }
         else {
             let assoc = associativity(sym);
-            if (sym == "LPAREN" && p != null && p == "ID") {
+            if (sym == "LPAREN" && t != null && t.sym == "ID") {
                 //push func-call to treeNode
                 operatorStack.push(new TreeNode("FUNC-CALL", null));
             }

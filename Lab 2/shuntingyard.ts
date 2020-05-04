@@ -106,6 +106,7 @@ export function parse(input: string): TreeNode{
 
 		var t = tokenizer.next();
 		//operandStack.pop();
+		console.log(tokenizer);
 		
 		//transform the MINUS operator to NEGATE before doing anything else
 		if (t.lexeme == "-") {

@@ -44,6 +44,7 @@ export class Tokenizer {
             let m = rex.exec(this.inputData);   //do the search
             
             if (m) {
+                //console.log(m.index, this.idx);
                 this.idx += m[0].length;
                 //m[0] contains matched text as string
                 let lexeme = m[0];
@@ -63,6 +64,8 @@ export class Tokenizer {
                     return this.next();
                 }
             }
+            
+            
         }
         //no match; syntax error
         throw new Error("No matches found!");
