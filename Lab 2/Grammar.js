@@ -6,7 +6,7 @@ class Grammar {
         this.nonTerminalSymbols = [];
         this.symbols = [];
         this.doNonterminals = false;
-        this.stable = true;
+        this.stable = false;
         let lineArray = grammar.split("\n"); //array of \n chars seperates each line
         //for loop here, put grammars into the set
         for (let i = 0; i < lineArray.length - 1; i++) {
@@ -82,28 +82,33 @@ class Grammar {
     }
     getNullable() {
         let nullable = new Set(); //storing LHS
+        nullable.add("");
         while (!this.stable) {
             this.stable = true;
             for (let i = 0; i < this.nonTerminalSymbols.length; i++) {
                 //split on EVERY |, then split on Whitespaces
                 //maybe make a new function for unioning a Set
                 //boolean ONLY stabilizes if it gets into the 3rd if check
-                let tmp = this.productions.get(this.nonTerminalSymbols[i]).source.trim();
+                let tmp = this.productions.get(this.nonTerminalSymbols[i]).source;
                 let sep = tmp.split(" | ");
+                //console.log("Sep: "+sep)
                 for (let j = 0; j < sep.length; j++) {
                     let wsArray = sep[j].split(" ");
+                    //console.log("wsArray: "+ wsArray)
                     let allNullable = wsArray.every((sym) => {
                         return nullable.has(sym);
                     });
                     if (allNullable) {
-                        if (!nullable.has(this.nonTerminalSymbols[j][0])) {
+                        if (!nullable.has(this.nonTerminalSymbols[i])) {
                             this.stable = false;
-                            this.union(sep, wsArray);
+                            nullable.add((this.nonTerminalSymbols[i]));
                         }
                     }
                 }
             }
         }
+        nullable.delete("");
+        console.log(nullable);
         return nullable;
     }
 }

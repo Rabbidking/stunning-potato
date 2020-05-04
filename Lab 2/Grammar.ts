@@ -4,7 +4,7 @@ export class Grammar {
     nonTerminalSymbols: Array<string> = [];
     symbols: Array<string> = [];
     doNonterminals = false;
-    stable = true;
+    stable = false;
 
     constructor(grammar: string) {
 
@@ -103,6 +103,7 @@ export class Grammar {
 
     getNullable(): Set<String> {
         let nullable = new Set<String>();   //storing LHS
+        nullable.add("")
         while (!this.stable) {
             this.stable = true;
             for (let i = 0; i < this.nonTerminalSymbols.length; i++) {
@@ -112,20 +113,24 @@ export class Grammar {
 
                 let tmp = this.productions.get(this.nonTerminalSymbols[i]).source;
                 let sep = tmp.split(" | ");
+                //console.log("Sep: "+sep)
                 for (let j = 0; j < sep.length; j++) {
                     let wsArray = sep[j].split(" ");
+                    //console.log("wsArray: "+ wsArray)
                     let allNullable = wsArray.every((sym: string) => {
                         return nullable.has(sym);
                     });
                     if (allNullable) {
-                        if (!nullable.has(this.nonTerminalSymbols[j][0])) {
+                        if (!nullable.has(this.nonTerminalSymbols[i])) {
                             this.stable = false;
-                            this.union(sep, wsArray);
+                            nullable.add((this.nonTerminalSymbols[i]));
                         }
                     }
                 }
             }
         }
+        nullable.delete("")
+        console.log(nullable)
         return nullable;
     }
 }
