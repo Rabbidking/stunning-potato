@@ -88,11 +88,11 @@ export class Grammar {
 
         }
 
-        for (let i = 0; i < this.symbols.length; i++) {
+        /*for (let i = 0; i < this.symbols.length; i++) {
             //if you have the symbol, but aren't using it
             if (!usedSymbol.has(this.symbols[i]))
                 throw new Error("Unused symbol!");
-        }
+        }*/
     }
 
     union(set1, set2): Set<String> {
@@ -103,22 +103,25 @@ export class Grammar {
 
     getNullable(): Set<String> {
         let nullable = new Set<String>();   //storing LHS
-        for (let i = 0; i < this.nonTerminalSymbols.length; i++) {
-            //split on EVERY |, then split on Whitespaces
-            //maybe make a new function for unioning a Set
-            //boolean ONLY stabilizes if it gets into the 3rd if check
+        while (!this.stable) {
+            this.stable = true;
+            for (let i = 0; i < this.nonTerminalSymbols.length; i++) {
+                //split on EVERY |, then split on Whitespaces
+                //maybe make a new function for unioning a Set
+                //boolean ONLY stabilizes if it gets into the 3rd if check
 
-            let tmp = this.productions.get(this.nonTerminalSymbols[i]).source;
-            let sep = tmp.split(" | ");
-            for (let j = 0; j < sep.length; j++) {
-                let wsArray = sep[j].split(" ");
-                let allNullable = wsArray.every((sym: string) => {
-                    return nullable.has(sym);
-                });
-                if (allNullable) {
-                    if (!nullable.has(this.nonTerminalSymbols[j][0])) {
-                        this.stable = false;
-                        this.union(sep, wsArray);
+                let tmp = this.productions.get(this.nonTerminalSymbols[i]).source;
+                let sep = tmp.split(" | ");
+                for (let j = 0; j < sep.length; j++) {
+                    let wsArray = sep[j].split(" ");
+                    let allNullable = wsArray.every((sym: string) => {
+                        return nullable.has(sym);
+                    });
+                    if (allNullable) {
+                        if (!nullable.has(this.nonTerminalSymbols[j][0])) {
+                            this.stable = false;
+                            this.union(sep, wsArray);
+                        }
                     }
                 }
             }
