@@ -41,13 +41,13 @@ export class Grammar {
                 tmp = tmp.concat(rhs);
                 tmp.replace("lambda", "");
 
-                let rex = new RegExp(tmp);
+                let rex = new RegExp(tmp, "gy");
                 this.productions.set(lhs, rex);
             }
 
             else {
                 //adding new value into productions
-                this.productions.set(lhs, new RegExp(rhs.replace("lambda", "")));
+                this.productions.set(lhs, new RegExp(rhs.replace("lambda", ""), "gy"));
                 this.symbols.push(lhs); //symbols = expressions/vars/varDecl (LHS), productions = vars -> vars (both LHS & RHS)
 
                 if (this.doNonterminals) {

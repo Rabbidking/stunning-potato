@@ -31,12 +31,12 @@ class Grammar {
                 tmp = tmp.concat(" | ");
                 tmp = tmp.concat(rhs);
                 tmp.replace("lambda", "");
-                let rex = new RegExp(tmp);
+                let rex = new RegExp(tmp, "gy");
                 this.productions.set(lhs, rex);
             }
             else {
                 //adding new value into productions
-                this.productions.set(lhs, new RegExp(rhs.replace("lambda", "")));
+                this.productions.set(lhs, new RegExp(rhs.replace("lambda", ""), "gy"));
                 this.symbols.push(lhs); //symbols = expressions/vars/varDecl (LHS), productions = vars -> vars (both LHS & RHS)
                 if (this.doNonterminals) {
                     this.nonTerminalSymbols.push(lhs);
@@ -88,7 +88,7 @@ class Grammar {
                 //split on EVERY |, then split on Whitespaces
                 //maybe make a new function for unioning a Set
                 //boolean ONLY stabilizes if it gets into the 3rd if check
-                let tmp = this.productions.get(this.nonTerminalSymbols[i]).source;
+                let tmp = this.productions.get(this.nonTerminalSymbols[i]).source.trim();
                 let sep = tmp.split(" | ");
                 for (let j = 0; j < sep.length; j++) {
                     let wsArray = sep[j].split(" ");
@@ -105,9 +105,6 @@ class Grammar {
             }
         }
         return nullable;
-        /*
-        }
-        return nullable;*/
     }
 }
 exports.Grammar = Grammar;
