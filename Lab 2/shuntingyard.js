@@ -81,14 +81,15 @@ function parse(input) {
     setGrammar();
     tokenizer = new Tokenizer_1.Tokenizer(grammar);
     tokenizer.setInput(input);
-    //let prev = tokenizer.previousToken();
     while (true) {
-        let t = tokenizer.next();
-        let prev = tokenizer.previousToken();
-        //operandStack.pop();
+        var t = tokenizer.next();
+        if (t.sym == "NUM")
+            operandStack.push(t.lexeme);
+        else
+            operatorStack.push(t.lexeme);
         //transform the MINUS operator to NEGATE before doing anything else
         if (t.lexeme == "-") {
-            if (p == null || p == "LPAREN") {
+            if (p == null || p == "LPAREN" || p == precedence(p)) {
                 t.sym = "NEGATE";
             }
         }
@@ -97,11 +98,10 @@ function parse(input) {
             break;
         }
         let sym = t.sym;
-        console.log(t);
+        console.log(sym);
         //make new TreeNodes and push them onto the operatorStack
         if (sym == "SUM" || sym == "ID") {
             operandStack.push(new TreeNode(t.sym, t));
-            console.log(operandStack);
         }
         //we're at the end of our statement, so we start popping operators off and do the operations, walking up the tree
         else if (sym == "RPAREN") {
@@ -109,7 +109,7 @@ function parse(input) {
                 doOperation();
             }
             let tempVal = operatorStack.pop();
-            if (t.sym == "LPAREN" && operandStack[operandStack.length - 1].sym == "ID") {
+            if (p.sym == "LPAREN" && operandStack[operandStack.length - 1].sym == "ID") {
                 let opNode = tempVal;
                 let child = operandStack.pop();
                 opNode.addChild(child);
@@ -118,28 +118,36 @@ function parse(input) {
         }
         else {
             let assoc = associativity(sym);
-            if (sym == "LPAREN" && t != null && t.sym == "ID") {
+            if (sym == "LPAREN" && p != null && p == "ID") {
                 //push func-call to treeNode
                 operatorStack.push(new TreeNode("FUNC-CALL", null));
             }
-            while (assoc != "right" || arity(sym) != 1) {
+            //console.log(operatorStack, operandStack)
+            while (assoc != "right" || arity(operatorStack.pop()) != 1) {
                 //if nothing's on our stack, break
                 if (operatorStack.length == 0) {
+                    console.log("nothing on the stack");
                     break;
                 }
                 let A = operatorStack.pop();
                 if (assoc == "left" && precedence(A.sym) >= precedence(t.sym)) {
+                    console.log("left precedence");
+                    //console.log(A)
                     doOperation();
                 }
                 else if (assoc == "right" && precedence(A.sym) > precedence(t.sym)) {
+                    console.log("right precedence");
+                    console.log(A);
                     doOperation();
                 }
                 else {
                     break;
                 }
             }
+            console.log("pushing new TreeNode to stack");
             operandStack.push(new TreeNode(t.sym, t));
         }
+        console.log("tracking previously used token\n");
         p = t;
     }
     while (operatorStack.length > 0) {
