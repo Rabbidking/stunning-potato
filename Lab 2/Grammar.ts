@@ -133,4 +133,27 @@ export class Grammar {
         console.log(nullable)
         return nullable;
     }
+
+    getFirst(): Map<string, Set<string>> {
+        let first = new Map<string, Set<string>>();
+        let nullable = this.getNullable();
+        for (let i = 0; i < this.symbols.length; i++) {
+            let tmp = new Set<string>();
+            tmp.add(this.symbols[i]);
+            first.set(this.symbols[i], tmp);
+        }
+        for (let i = 0; i < this.nonTerminalSymbols.length; i++)
+            first.set(this.nonTerminalSymbols[i], new Set);
+
+        while (!this.stable) {
+            this.stable = true;
+            for (let i = 0; i < this.nonTerminalSymbols.length; i++) {
+                let tmp = this.productions.get(this.nonTerminalSymbols[i]).source;
+                let sep = tmp.split(" | ");
+                for (let j = 0; j < sep.length; j++) {
+
+                }
+            }
+        }
+    }
 }
